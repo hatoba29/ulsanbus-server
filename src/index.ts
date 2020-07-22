@@ -7,22 +7,36 @@ import config from "./config"
 // init RouteInfo, BusStopInfo
 let RouteInfo = []
 let BusStopInfo = []
+let count = 0
+const cancel = axios.CancelToken.source()
+
+axios.defaults.cancelToken = cancel.token
+axios.interceptors.response.use(null, (err) => {
+  if (count < 2) {
+    count++
+    console.log(`retry... (${count})`)
+    return new Promise((res) => res(init()))
+  }
+  console.error(`retry failed... (${count})`)
+  return Promise.reject(err)
+})
+
 async function init() {
   await axios
-    .get(config.baseURL + "RouteInfo.xo" + config.key + config.defaultInput)
+    .get(config.baseURL + "RouteInfo.xo" + config.defaultInput)
     .then((response) => {
       parseString(response.data, config.xmlOptions, (err, result) => {
         RouteInfo = result.tableInfo.list.row
       })
       console.log("RouteInfo init complete")
     })
-    .catch((res) => {
-      console.error(`BusStopInfo Init ${res}`)
-      throw res
+    .catch((err) => {
+      console.error(`RouteInfo Init ${err}`)
+      throw err
     })
 
   await axios
-    .get(config.baseURL + "BusStopInfo.xo" + config.key + config.defaultInput)
+    .get(config.baseURL + "BusStopInfo.xo" + config.defaultInput)
     .then((response) => {
       parseString(response.data, config.xmlOptions, (err, result) => {
         BusStopInfo = result.tableInfo.list.row
@@ -59,9 +73,36 @@ const typeDefs = gql`
     STOPNAME: String
   }
 
+  type RouteDetail {
+    BRSSEQNO: Int
+    STOPID: Int
+    STOPNM: String
+  }
+
+  type Arrival {
+    PREVSTOPCNT: Int
+    ARRIVALTIME: Int
+    STOPID: Int
+    STOPNM: String
+    PRESENTSTOPNM: String
+    ROUTENM: String
+  }
+
+  type Timetable {
+    DIRECTION: Int
+    TIME: String
+    CLASS: Int
+    ROUTENAME: String
+    ROUTENO: Int
+    DPTCSEQNO: Int
+  }
+
   type Query {
     route: [Route]
     busStop: [BusStop]
+    routeDetail(id: Int!): [RouteDetail]
+    arrival(id: Int!): [Arrival]
+    timetable(id: Int!, day: Int!): [Timetable]
   }
 `
 
@@ -69,6 +110,15 @@ const resolvers = {
   Query: {
     route: () => RouteInfo,
     busStop: () => BusStopInfo,
+    routeDetail: async (_s, args, { dataSources }) => {
+      return dataSources.busAPI.getRouteDetail(args)
+    },
+    arrival: async (_s, args, { dataSources }) => {
+      return dataSources.busAPI.getArrival(args)
+    },
+    timetable: async (_s, args, { dataSources }) => {
+      return dataSources.busAPI.getTimetable(args)
+    },
   },
 }
 
@@ -90,6 +140,14 @@ init()
       console.log(`🚀 Server ready at ${url}`)
     })
   })
-  .catch(() => {
-    console.error("init fail")
+  .catch((err) => {
+    if (err.response != undefined) {
+      console.error("init fail:", err.response.statusText)
+    } else {
+      console.error("init fail:", err)
+    }
   })
+
+// server.listen().then(({ url }) => {
+//   console.log(`🚀 Server ready at ${url}`)
+// })
