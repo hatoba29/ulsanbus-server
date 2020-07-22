@@ -4,6 +4,8 @@
     "target": "es6",
     "moduleResolution": "node",
     "outDir": "dist",
-    "inlineSourceMap": true
+    "inlineSourceMap": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true
   }
 }
