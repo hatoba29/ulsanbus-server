@@ -22,7 +22,7 @@ axios.interceptors.response.use(null, (err) => {
 })
 
 async function init() {
-  await axios
+  axios
     .get(config.baseURL + "RouteInfo.xo" + config.defaultInput)
     .then((response) => {
       parseString(response.data, config.xmlOptions, (err, result) => {
@@ -35,7 +35,7 @@ async function init() {
       throw err
     })
 
-  await axios
+  axios
     .get(config.baseURL + "BusStopInfo.xo" + config.defaultInput)
     .then((response) => {
       parseString(response.data, config.xmlOptions, (err, result) => {
@@ -86,6 +86,7 @@ const typeDefs = gql`
     STOPNM: String
     PRESENTSTOPNM: String
     ROUTENM: String
+    VEHICLENO: String
   }
 
   type Timetable {
