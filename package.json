@@ -10,7 +10,7 @@
     "@types/xml2js": "^0.4.5",
     "apollo-datasource-rest": "^0.9.3",
     "apollo-server": "^2.15.1",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "graphql": "^15.3.0",
     "xml2js": "^0.4.23"
   },
